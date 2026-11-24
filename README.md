@@ -142,8 +142,25 @@ cached bot UUID.
 
 Behavioural, not vendor attribution. Two concrete indicators:
 
-- **The operator's working language is Chinese** — operator-facing strings in the binary are Chinese
-  (e.g. HTTP-hosting status/error messages).
+- **The operator's working language is Chinese.** The implant's internal status/error/log messages are
+  Chinese. A sample, verbatim, with translations:
+
+  | String (verbatim) | Translation |
+  | :--- | :--- |
+  | `节点启动失败: 端口无效` | node start failed: invalid port |
+  | `复制失败: 无法定位自身程序` | copy failed: cannot locate own program |
+  | `已复制: 新实例已启动 (salt=…), 约 5 秒后上线` | copied: new instance started (salt=…), online in ~5s |
+  | `单端口复用: 控制TLS/载荷HTTP/隧道 分流` | single-port multiplexing: control=TLS / payload=HTTP / tunnel demux |
+  | `下载载荷失败(上游需可访问面板)` | payload download failed (upstream must be able to reach the panel) |
+  | `节点监听已启动: 0.0.0.0:` | node listener started: 0.0.0.0: |
+  | `本机内网 IP:` | local (intranet) IP: |
+  | `命令执行失败` / `未知任务类型` | command execution failed / unknown task type |
+
+  Two of these reveal architecture beyond simple provenance: the **single-port multiplexing** line confirms
+  td-agent reuses one port to carry the TLS control channel, HTTP payload transfer, and tunnelling
+  (demultiplexed server-side) — consistent with the lab-observed `:443` connection plus assorted probing;
+  and `面板` ("panel") indicates an operator control-panel upstream. The self-replication line
+  (`新实例… salt=… ~5秒后上线`) shows it re-launches a fresh instance carrying a salt.
 - **td-agent is a kit.** The binary carries a build-time template placeholder **`@@TDHOST@@`** and ships a
   default gate token **`ChangeMe_GateToken_9f3K`** (an unchanged placeholder). Combined with the `TD_PROJ`
   campaign field, this is a builder/framework, not a one-off tool — expect the same fingerprints under other
