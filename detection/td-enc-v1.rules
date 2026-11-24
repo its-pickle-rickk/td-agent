@@ -1,0 +1,22 @@
+# td-agent / td-enc-v1 — Suricata rules.
+#
+# NOTE ON SCOPE: td-agent's control channel normally runs over standard TLS 1.3,
+# where these application-layer tokens are encrypted and NOT visible on the wire.
+# These content matches fire against td-agent's PLAINTEXT tunnel mode (TUNPLAIN /
+# TD_TUNPROTO in {tcp,udp}) and other non-TLS deployments. For the TLS mode, rely
+# on the YARA/host IOCs and a JA3/JA4 fingerprint of the rustls-0.23.44 client.
+#
+# SIDs are in a placeholder range (4200000+) — renumber for your ruleset.
+
+alert tcp any any -> any any (msg:"td-agent td-enc-v1 handshake (ENCSTART)"; \
+    flow:established,to_server; content:"ENCSTART"; depth:16; \
+    classtype:trojan-activity; sid:4200001; rev:1;)
+
+alert tcp any any -> any any (msg:"td-agent td-enc-v1 handshake ack (ENCOK)"; \
+    flow:established,to_client; content:"ENCOK"; depth:16; \
+    classtype:trojan-activity; sid:4200002; rev:1;)
+
+alert http any any -> any any (msg:"td-agent wsGate upgrade carries default gate token"; \
+    flow:established,to_server; content:"ChangeMe_GateToken"; http.header; \
+    content:"wsGate"; http.uri; \
+    classtype:trojan-activity; sid:4200003; rev:1;)
